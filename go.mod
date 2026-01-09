@@ -4,13 +4,13 @@ go 1.25.5
 
 require (
 	github.com/luxfi/constants v1.4.2
-	github.com/luxfi/ids v1.2.4
+	github.com/luxfi/ids v1.2.9
 	golang.org/x/crypto v0.46.0
 )
 
 require (
 	github.com/gorilla/rpc v1.2.1 // indirect
-	github.com/luxfi/crypto v1.17.22 // indirect
+	github.com/luxfi/crypto v1.17.38 // indirect
 	github.com/luxfi/math v0.1.4 // indirect
 	github.com/luxfi/mock v0.1.0 // indirect
 	github.com/luxfi/node v1.20.3 // indirect
