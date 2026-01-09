@@ -15,7 +15,7 @@ import (
 
 	"golang.org/x/crypto/cryptobyte"
 
-	"github.com/luxfi/const"
+	"github.com/luxfi/constants"
 
 	cryptobyte_asn1 "golang.org/x/crypto/cryptobyte/asn1"
 )

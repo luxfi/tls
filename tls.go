@@ -19,7 +19,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"crypto/hkdf"
+	"golang.org/x/crypto/hkdf"
 )
 
 const (
