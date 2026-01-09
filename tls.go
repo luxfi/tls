@@ -7,19 +7,18 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/hkdf"
 	"crypto/rand"
 	"crypto/sha256"
 	ctls "crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io"
+	"hash"
 	"math/big"
 	"os"
 	"path/filepath"
 	"time"
-
-	"golang.org/x/crypto/hkdf"
 )
 
 const (
@@ -121,20 +120,43 @@ func NewTLSCert() (*ctls.Certificate, error) {
 
 // deterministicReader creates a deterministic random source from a seed.
 // This is used to make ECDSA certificate signing deterministic.
+// Uses native crypto/hkdf from Go 1.24+ for key derivation.
 type deterministicReader struct {
-	reader io.Reader
+	h      func() hash.Hash
+	prk    []byte
+	info   string
+	offset int
+	buf    []byte
 }
 
 func newDeterministicReader(seed []byte) *deterministicReader {
-	// Use HKDF to create a deterministic pseudo-random stream from the seed
 	h := sha256.New
-	info := []byte("lux-staking-cert-deterministic-rand")
-	reader := hkdf.New(h, seed, nil, info)
-	return &deterministicReader{reader: reader}
+	info := "lux-staking-cert-deterministic-rand"
+	// Extract PRK from seed using HKDF-Extract
+	prk, _ := hkdf.Extract(h, seed, nil)
+	return &deterministicReader{
+		h:    h,
+		prk:  prk,
+		info: info,
+	}
 }
 
 func (d *deterministicReader) Read(p []byte) (int, error) {
-	return d.reader.Read(p)
+	// Use HKDF-Expand to generate deterministic bytes on demand
+	// Generate enough bytes to satisfy the request
+	needed := len(p)
+	for len(d.buf) < needed {
+		// Expand more bytes using incrementing counter in info
+		chunk, err := hkdf.Expand(d.h, d.prk, d.info+string(rune(d.offset)), 32)
+		if err != nil {
+			return 0, err
+		}
+		d.buf = append(d.buf, chunk...)
+		d.offset++
+	}
+	copy(p, d.buf[:needed])
+	d.buf = d.buf[needed:]
+	return needed, nil
 }
 
 // NewCertAndKeyBytesFromKey creates a TLS cert from an existing ECDSA P-256 private key.
