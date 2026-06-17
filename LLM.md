@@ -1,4 +1,4 @@
-# LLM.md - Hanzo Tls
+# Hanzo Tls
 
 ## Overview
 Go module: github.com/luxfi/tls
